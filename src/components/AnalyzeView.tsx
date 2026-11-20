@@ -1,9 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
   CheckCircle2,
   FileUp,
   Loader2,
+  RotateCcw,
   Sparkles,
   Trash2,
   Upload,
@@ -41,6 +42,7 @@ export function AnalyzeView({ getIdToken, onAnalysisComplete }: AnalyzeViewProps
   const [jdFile, setJdFile] = useState<File | null>(null);
   const [jdError, setJdError] = useState<string | null>(null);
 
+  const quickScanAbortRef = useRef<AbortController | null>(null);
   const [quickScanLoading, setQuickScanLoading] = useState(false);
   const [quickScanResult, setQuickScanResult] = useState<QuickScanResult | null>(null);
 
@@ -48,6 +50,13 @@ export function AnalyzeView({ getIdToken, onAnalysisComplete }: AnalyzeViewProps
   const [analyzing, setAnalyzing] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+      quickScanAbortRef.current?.abort();
+    };
+  }, []);
 
   const validateClientPdf = (file: File): string | null => {
     const isPdfExt = file.name.toLowerCase().endsWith('.pdf');
@@ -121,18 +130,29 @@ export function AnalyzeView({ getIdToken, onAnalysisComplete }: AnalyzeViewProps
       return;
     }
 
+    quickScanAbortRef.current?.abort();
+    const controller = new AbortController();
+    quickScanAbortRef.current = controller;
+
     setQuickScanLoading(true);
     try {
       const result = await quickScanJd({
         jdText: jdMode === 'text' ? jdText.trim() : undefined,
         jdFile: jdMode === 'pdf' ? jdFile : null,
+        signal: controller.signal,
       });
       setQuickScanResult(result);
     } catch (error: unknown) {
+      if ((error as { name?: string })?.name === 'AbortError') {
+        return;
+      }
       setJdError(
         error instanceof Error ? error.message : 'Quick Scan failed. Please try again.'
       );
     } finally {
+      if (quickScanAbortRef.current === controller) {
+        quickScanAbortRef.current = null;
+      }
       setQuickScanLoading(false);
     }
   };
@@ -220,13 +240,26 @@ export function AnalyzeView({ getIdToken, onAnalysisComplete }: AnalyzeViewProps
       {submitError && (
         <div
           role="alert"
-          className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800"
         >
-          <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" aria-hidden="true" />
-          <div className="space-y-1">
-            <p className="font-medium text-red-900">Analysis could not be completed</p>
-            <p>{submitError}</p>
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="space-y-1">
+              <p className="font-medium text-red-900">Analysis could not be completed</p>
+              <p>{submitError}</p>
+            </div>
           </div>
+          {resumeFile && ((jdMode === 'text' && jdText.trim().length >= 40) || (jdMode === 'pdf' && jdFile)) && (
+            <button
+              type="button"
+              disabled={analyzing}
+              onClick={(e) => handleRunAnalysis(e)}
+              className="inline-flex items-center gap-1.5 self-start sm:self-center px-3 py-1.5 text-xs font-medium text-red-800 bg-white border border-red-200 hover:bg-red-100/60 rounded-lg transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+            >
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+              Retry Analysis
+            </button>
+          )}
         </div>
       )}
 

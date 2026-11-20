@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import {
+  AlertCircle,
   FolderOpen,
   Loader2,
   LogIn,
+  RefreshCw,
   Search,
   Trash2,
 } from 'lucide-react';
@@ -18,6 +20,7 @@ interface HistoryViewProps {
   deletingId: number | null;
   onOpenReport: (id: number) => void;
   onDeleteReport: (id: number) => void;
+  onRetry?: () => void;
   onSignIn: () => void;
   onStartNewAnalysis: () => void;
 }
@@ -31,6 +34,7 @@ export function HistoryView({
   deletingId,
   onOpenReport,
   onDeleteReport,
+  onRetry,
   onSignIn,
   onStartNewAnalysis,
 }: HistoryViewProps) {
@@ -153,8 +157,25 @@ export function HistoryView({
       </div>
 
       {error && (
-        <div role="alert" className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800">
-          {error}
+        <div
+          role="alert"
+          className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-800 flex items-center justify-between gap-4"
+        >
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>{error}</span>
+          </div>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-800 bg-white border border-red-200 hover:bg-red-100/60 rounded-lg transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+              Retry
+            </button>
+          )}
         </div>
       )}
 

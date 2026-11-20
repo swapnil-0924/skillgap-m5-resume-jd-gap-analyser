@@ -1,10 +1,12 @@
 import {
+  AlertCircle,
   ArrowRight,
   CalendarDays,
   FileSearch,
   FileText,
   FolderOpen,
   LogIn,
+  RefreshCw,
 } from 'lucide-react';
 import type { AnalysisHistoryItem, AnalysisReport } from '../types/analysis';
 import { formatDateShort, getScoreTone } from '../utils/formatters';
@@ -13,11 +15,13 @@ interface OverviewViewProps {
   activeReport: AnalysisReport | null;
   history: AnalysisHistoryItem[];
   historyLoading: boolean;
+  historyError?: string | null;
   isSignedIn: boolean;
   onStartNewAnalysis: () => void;
   onOpenReportView: () => void;
   onOpenRoadmapView: () => void;
   onSelectHistoryItem: (id: number) => void;
+  onRetryHistory?: () => void;
   onSignIn: () => void;
 }
 
@@ -25,11 +29,13 @@ export function OverviewView({
   activeReport,
   history,
   historyLoading,
+  historyError,
   isSignedIn,
   onStartNewAnalysis,
   onOpenReportView,
   onOpenRoadmapView,
   onSelectHistoryItem,
+  onRetryHistory,
   onSignIn,
 }: OverviewViewProps) {
   const totalSaved = history.length;
@@ -206,6 +212,32 @@ export function OverviewView({
               {[1, 2, 3].map((row) => (
                 <div key={row} className="h-10 bg-slate-100 rounded animate-pulse" />
               ))}
+            </div>
+          ) : historyError ? (
+            <div role="alert" className="p-8 text-center space-y-3">
+              <div className="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center mx-auto">
+                <AlertCircle className="w-5 h-5" aria-hidden="true" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Unable to load recent analyses
+                </h3>
+                <p className="text-sm text-slate-600 max-w-md mx-auto">
+                  {historyError}
+                </p>
+              </div>
+              {onRetryHistory && (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={onRetryHistory}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-4 h-4" aria-hidden="true" />
+                    Retry
+                  </button>
+                </div>
+              )}
             </div>
           ) : history.length === 0 ? (
             <div className="p-10 text-center space-y-3">

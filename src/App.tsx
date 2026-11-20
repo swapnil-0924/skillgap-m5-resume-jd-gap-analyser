@@ -20,6 +20,7 @@ import {
   updateRoadmapProgress,
 } from './services/api';
 import { OverviewView } from './components/OverviewView';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const AnalyzeView = lazy(() =>
   import('./components/AnalyzeView').then((m) => ({ default: m.AnalyzeView }))
@@ -174,17 +175,22 @@ function WorkspaceApp() {
 
   const handleToggleDayComplete = async (day: number) => {
     if (!activeReport) return;
-    const exists = activeReport.completedDays.includes(day);
+    const previousDays = activeReport.completedDays;
+    const exists = previousDays.includes(day);
     const nextDays = exists
-      ? activeReport.completedDays.filter((d) => d !== day)
-      : [...activeReport.completedDays, day].sort((a, b) => a - b);
+      ? previousDays.filter((d) => d !== day)
+      : [...previousDays, day].sort((a, b) => a - b);
 
     setActiveReport({ ...activeReport, completedDays: nextDays });
 
     if (activeReport.saved && typeof activeReport.id === 'number') {
       try {
         const token = await getIdToken();
-        if (!token) return;
+        if (!token) {
+          setActiveReport((prev) => (prev ? { ...prev, completedDays: previousDays } : prev));
+          setNotice('Sign in again to save roadmap progress changes.');
+          return;
+        }
         const updated = await updateRoadmapProgress(activeReport.id, nextDays, token);
         setActiveReport(updated);
         setHistory((prev) =>
@@ -194,8 +200,13 @@ function WorkspaceApp() {
               : h
           )
         );
-      } catch (error) {
-        console.error('Failed to persist roadmap day toggle:', error);
+      } catch (error: unknown) {
+        setActiveReport((prev) => (prev ? { ...prev, completedDays: previousDays } : prev));
+        setNotice(
+          error instanceof Error
+            ? `Could not save roadmap progress: ${error.message}`
+            : 'Could not save roadmap progress. Please try again.'
+        );
       }
     }
   };
@@ -409,78 +420,83 @@ function WorkspaceApp() {
             </div>
           )}
 
-          {view === 'overview' && (
-            <OverviewView
-              activeReport={activeReport}
-              history={history}
-              historyLoading={historyLoading}
-              isSignedIn={Boolean(user)}
-              onStartNewAnalysis={() => navigate('analyze')}
-              onOpenReportView={() => navigate('report')}
-              onOpenRoadmapView={() => navigate('roadmap')}
-              onSelectHistoryItem={handleOpenHistoryItem}
-              onSignIn={signInWithGoogle}
-            />
-          )}
-
-          <Suspense
-            fallback={
-              <div
-                role="status"
-                aria-live="polite"
-                className="flex min-h-[320px] items-center justify-center rounded-xl border border-[#E2E8F0] bg-white p-8"
-              >
-                <div className="flex flex-col items-center gap-3 text-center">
-                  <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#E2E8F0] border-t-[#1E3A8A]" />
-                  <p className="text-sm font-medium text-[#475569]">
-                    Loading {VIEW_LABELS[view]}…
-                  </p>
-                </div>
-              </div>
-            }
-          >
-            {view === 'analyze' && (
-              <AnalyzeView
-                getIdToken={getIdToken}
-                onAnalysisComplete={handleAnalysisComplete}
-              />
-            )}
-
-            {view === 'report' && (
-              <ReportView
-                report={activeReport}
-                isSignedIn={Boolean(user)}
-                savingReport={savingReport}
-                onSaveSessionReport={handleSaveSessionReport}
-                onOpenRoadmap={() => navigate('roadmap')}
-                onStartNewAnalysis={() => navigate('analyze')}
-              />
-            )}
-
-            {view === 'roadmap' && (
-              <RoadmapView
-                report={activeReport}
-                onToggleDayComplete={handleToggleDayComplete}
-                onOpenReport={() => navigate('report')}
-                onStartNewAnalysis={() => navigate('analyze')}
-              />
-            )}
-
-            {view === 'history' && (
-              <HistoryView
-                isSignedIn={Boolean(user)}
+          <ErrorBoundary scope="view" resetKey={view}>
+            {view === 'overview' && (
+              <OverviewView
+                activeReport={activeReport}
                 history={history}
-                loading={historyLoading}
-                error={historyError}
-                openingId={openingId}
-                deletingId={deletingId}
-                onOpenReport={handleOpenHistoryItem}
-                onDeleteReport={handleDeleteHistoryItem}
-                onSignIn={signInWithGoogle}
+                historyLoading={historyLoading}
+                historyError={historyError}
+                isSignedIn={Boolean(user)}
                 onStartNewAnalysis={() => navigate('analyze')}
+                onOpenReportView={() => navigate('report')}
+                onOpenRoadmapView={() => navigate('roadmap')}
+                onSelectHistoryItem={handleOpenHistoryItem}
+                onRetryHistory={loadHistory}
+                onSignIn={signInWithGoogle}
               />
             )}
-          </Suspense>
+
+            <Suspense
+              fallback={
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="flex min-h-[320px] items-center justify-center rounded-xl border border-[#E2E8F0] bg-white p-8"
+                >
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#E2E8F0] border-t-[#1E3A8A]" />
+                    <p className="text-sm font-medium text-[#475569]">
+                      Loading {VIEW_LABELS[view]}…
+                    </p>
+                  </div>
+                </div>
+              }
+            >
+              {view === 'analyze' && (
+                <AnalyzeView
+                  getIdToken={getIdToken}
+                  onAnalysisComplete={handleAnalysisComplete}
+                />
+              )}
+
+              {view === 'report' && (
+                <ReportView
+                  report={activeReport}
+                  isSignedIn={Boolean(user)}
+                  savingReport={savingReport}
+                  onSaveSessionReport={handleSaveSessionReport}
+                  onOpenRoadmap={() => navigate('roadmap')}
+                  onStartNewAnalysis={() => navigate('analyze')}
+                />
+              )}
+
+              {view === 'roadmap' && (
+                <RoadmapView
+                  report={activeReport}
+                  onToggleDayComplete={handleToggleDayComplete}
+                  onOpenReport={() => navigate('report')}
+                  onStartNewAnalysis={() => navigate('analyze')}
+                />
+              )}
+
+              {view === 'history' && (
+                <HistoryView
+                  isSignedIn={Boolean(user)}
+                  history={history}
+                  loading={historyLoading}
+                  error={historyError}
+                  openingId={openingId}
+                  deletingId={deletingId}
+                  onOpenReport={handleOpenHistoryItem}
+                  onDeleteReport={handleDeleteHistoryItem}
+                  onRetry={loadHistory}
+                  onSignIn={signInWithGoogle}
+                  onStartNewAnalysis={() => navigate('analyze')}
+                />
+              )}
+            </Suspense>
+          </ErrorBoundary>
         </main>
       </div>
     </div>
