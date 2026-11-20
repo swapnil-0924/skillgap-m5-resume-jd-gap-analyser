@@ -1,0 +1,8 @@
+{
+  "name": "SkillGap M5 — Resume vs JD Gap Analyser",
+  "description": "AI-powered Resume vs Job Description Gap Analyser with PDF & OCR extraction, semantic skill matching, transparent compatibility scoring, JD evidence verification, and personalized 14-day learning roadmaps.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
