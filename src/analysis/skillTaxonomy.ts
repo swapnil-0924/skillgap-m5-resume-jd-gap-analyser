@@ -26,6 +26,10 @@ const SKILL_ALIASES: Record<string, string> = {
   'java 17': 'Java',
   'java 21': 'Java',
   jdk: 'Java',
+  c: 'C',
+  'c language': 'C',
+  'c programming': 'C',
+  'ansi c': 'C',
   'c++': 'C++',
   cpp: 'C++',
   'c/c++': 'C++',
@@ -66,6 +70,7 @@ const SKILL_ALIASES: Record<string, string> = {
   'react.js': 'React',
   'react js': 'React',
   'react native': 'React Native',
+  'react-native': 'React Native',
   reactnative: 'React Native',
   nextjs: 'Next.js',
   'next.js': 'Next.js',
@@ -269,6 +274,11 @@ const SKILL_ALIASES: Record<string, string> = {
   'apache airflow': 'Apache Airflow',
   kafka: 'Apache Kafka',
   'apache kafka': 'Apache Kafka',
+  dbt: 'dbt',
+  mlops: 'MLOps',
+  'ml ops': 'MLOps',
+  cuda: 'CUDA',
+  rtos: 'RTOS',
   tableau: 'Tableau',
   'power bi': 'Power BI',
   powerbi: 'Power BI',
@@ -324,6 +334,7 @@ const SKILL_ALIASES: Record<string, string> = {
 
 const KNOWN_ACRONYMS = new Set([
   'API',
+  'ARM',
   'AWS',
   'BI',
   'CD',
@@ -331,6 +342,7 @@ const KNOWN_ACRONYMS = new Set([
   'CLI',
   'CRM',
   'CSS',
+  'CUDA',
   'DB',
   'ETL',
   'ERP',
@@ -338,8 +350,10 @@ const KNOWN_ACRONYMS = new Set([
   'GPU',
   'HTML',
   'HTTP',
+  'I2C',
   'IAM',
   'JSON',
+  'JTAG',
   'JWT',
   'KPI',
   'LLM',
@@ -352,10 +366,12 @@ const KNOWN_ACRONYMS = new Set([
   'RAG',
   'REST',
   'ROI',
+  'RTOS',
   'SaaS',
   'SDK',
   'SEO',
   'SLA',
+  'SPI',
   'SQL',
   'SSO',
   'TDD',
@@ -364,6 +380,8 @@ const KNOWN_ACRONYMS = new Set([
   'VPC',
   'XML',
 ]);
+
+const ALLOWED_SINGLE_CHAR_SKILLS = new Set(['c', 'r']);
 
 function cleanWhitespaceAndPunctuation(input: string): string {
   return input
@@ -437,7 +455,12 @@ export function normalizeAndDeduplicateSkills(
 
   for (const item of items) {
     const rawName = cleanWhitespaceAndPunctuation(item.rawName);
-    if (!rawName || rawName.length < 2) continue;
+    if (
+      !rawName ||
+      (rawName.length < 2 && !ALLOWED_SINGLE_CHAR_SKILLS.has(rawName.toLowerCase()))
+    ) {
+      continue;
+    }
 
     const canonicalName = normalizeSkillName(rawName);
     if (!canonicalName) continue;
@@ -468,4 +491,10 @@ export function normalizeAndDeduplicateSkills(
 
 export function getSkillKey(skill: string): string {
   return normalizeSkillName(skill).toLowerCase();
+}
+
+export function areCanonicalSynonyms(skillA: string, skillB: string): boolean {
+  const keyA = getSkillKey(skillA);
+  const keyB = getSkillKey(skillB);
+  return Boolean(keyA && keyB && keyA === keyB);
 }

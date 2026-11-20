@@ -401,50 +401,199 @@ export async function extractStructuredJobDescription(
   return runStructuredExtraction('jd', jdText);
 }
 
+export interface EmbeddingBatchResult {
+  vectors: Map<string, number[]>;
+  model: string;
+  status: 'succeeded' | 'partial' | 'fallback' | 'skipped';
+  requestedCount: number;
+  embeddedCount: number;
+  fallbackReason: string | null;
+  latencyMs: number;
+}
+
+export type SkillEmbedClientFn = (params: {
+  model: string;
+  contents: Array<{ role: string; parts: Array<{ text: string }> }>;
+}) => Promise<{ embeddings?: Array<{ values?: number[] }> }>;
+
 /**
  * Generates semantic vector embeddings for skill names using gemini-embedding-2.
- * Bounded by a strict 12s timeout so it never stalls the pipeline; falls back cleanly
- * to lexical semantic matching if embeddings are unavailable.
+ *
+ * IMPORTANT SDK BEHAVIOR (`@google/genai`):
+ * `gemini-embedding-2` is a multimodal embedding model (`tIsMultimodalEmbeddingModel` = true).
+ * Passing a plain `string[]` causes `@google/genai`'s `tContents()` to merge every string
+ * into ONE single multi-part `Content` object, returning only 1 fused vector instead of N.
+ * Passing an array of explicit `Content` objects (`{ role: 'user', parts: [{ text }] }`)
+ * ensures `batchEmbedContents` embeds each skill independently and returns N vectors.
+ *
+ * If batch embedding still returns fewer vectors than requested, falls back to bounded
+ * concurrent single-item embedding calls; if the provider is unreachable or errors,
+ * returns an explicit `status: 'fallback'` with `fallbackReason` so the pipeline never
+ * silently misreports lexical fallback as neural embeddings.
  */
 export async function embedSkillNames(
-  canonicalSkills: string[]
-): Promise<Map<string, number[]>> {
+  canonicalSkills: string[],
+  options?: { embedFn?: SkillEmbedClientFn; timeoutMs?: number }
+): Promise<EmbeddingBatchResult> {
+  const startedAt = Date.now();
   const unique = Array.from(
     new Set(canonicalSkills.map((s) => s.trim()).filter(Boolean))
   );
-  const result = new Map<string, number[]>();
-  if (unique.length === 0) return result;
+  const vectors = new Map<string, number[]>();
 
-  try {
-    const ai = getAiClient();
-    const batchSize = 64;
-    for (let i = 0; i < unique.length; i += batchSize) {
-      const batch = unique.slice(i, i + batchSize);
+  if (unique.length === 0) {
+    return {
+      vectors,
+      model: EMBEDDING_MODEL,
+      status: 'skipped',
+      requestedCount: 0,
+      embeddedCount: 0,
+      fallbackReason: null,
+      latencyMs: Date.now() - startedAt,
+    };
+  }
+
+  const timeoutMs = options?.timeoutMs ?? 15000;
+  const runEmbed: SkillEmbedClientFn =
+    options?.embedFn ??
+    (async (params) => {
+      const ai = getAiClient();
+      return ai.models.embedContent({
+        model: params.model,
+        contents: params.contents,
+      });
+    });
+
+  const failureReasons: string[] = [];
+  const batchSize = 32;
+
+  for (let i = 0; i < unique.length; i += batchSize) {
+    const batch = unique.slice(i, i + batchSize);
+    const contentItems = batch.map((skill) => ({
+      role: 'user',
+      parts: [{ text: skill }],
+    }));
+
+    let batchMapped = 0;
+    try {
       const embedRes = await withTimeout(
-        ai.models.embedContent({
+        runEmbed({
           model: EMBEDDING_MODEL,
-          contents: batch,
+          contents: contentItems,
         }),
-        12000,
+        timeoutMs,
         'Semantic skill embeddings'
       );
 
-      const vectors = embedRes.embeddings || [];
-      for (let idx = 0; idx < batch.length; idx++) {
-        const values = vectors[idx]?.values;
-        if (Array.isArray(values) && values.length > 0) {
-          result.set(batch[idx].toLowerCase(), values);
+      const returnedEmbeddings = embedRes.embeddings || [];
+      if (returnedEmbeddings.length === batch.length) {
+        for (let idx = 0; idx < batch.length; idx++) {
+          const values = returnedEmbeddings[idx]?.values;
+          if (Array.isArray(values) && values.length > 0) {
+            vectors.set(batch[idx].toLowerCase(), values);
+            batchMapped += 1;
+          }
+        }
+      } else {
+        failureReasons.push(
+          `Batch response count mismatch (expected ${batch.length}, received ${returnedEmbeddings.length})`
+        );
+      }
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      failureReasons.push(msg);
+    }
+
+    // If batch call failed or returned a mismatched count for multi-skill input,
+    // attempt bounded-concurrency single-skill calls before falling back.
+    if (batchMapped < batch.length) {
+      const missingSkills = batch.filter((skill) => !vectors.has(skill.toLowerCase()));
+      const concurrency = 6;
+      let singleItemFatalError: string | null = null;
+
+      for (let j = 0; j < missingSkills.length; j += concurrency) {
+        const chunk = missingSkills.slice(j, j + concurrency);
+        const settled = await Promise.allSettled(
+          chunk.map(async (skill) => {
+            const singleRes = await withTimeout(
+              runEmbed({
+                model: EMBEDDING_MODEL,
+                contents: [{ role: 'user', parts: [{ text: skill }] }],
+              }),
+              Math.min(timeoutMs, 8000),
+              `Single skill embedding (${skill})`
+            );
+            const values = singleRes.embeddings?.[0]?.values;
+            if (!Array.isArray(values) || values.length === 0) {
+              throw new Error(`Empty embedding vector returned for "${skill}"`);
+            }
+            return { skill, values };
+          })
+        );
+
+        let chunkSuccess = 0;
+        for (const item of settled) {
+          if (item.status === 'fulfilled') {
+            vectors.set(item.value.skill.toLowerCase(), item.value.values);
+            chunkSuccess += 1;
+          } else if (!singleItemFatalError) {
+            singleItemFatalError =
+              item.reason instanceof Error ? item.reason.message : String(item.reason);
+          }
+        }
+
+        // Abort remaining chunks immediately if an entire chunk fails (e.g., auth/404/network error)
+        if (chunkSuccess === 0 && singleItemFatalError) {
+          failureReasons.push(singleItemFatalError);
+          break;
         }
       }
     }
-  } catch (error) {
+  }
+
+  const latencyMs = Date.now() - startedAt;
+  const embeddedCount = vectors.size;
+  const requestedCount = unique.length;
+
+  let status: EmbeddingBatchResult['status'];
+  let fallbackReason: string | null = null;
+
+  if (embeddedCount === requestedCount) {
+    status = 'succeeded';
+  } else if (embeddedCount > 0) {
+    status = 'partial';
+    fallbackReason =
+      failureReasons[0] ||
+      `Only ${embeddedCount}/${requestedCount} skills embedded; remaining skills used lexical fallback.`;
+  } else {
+    status = 'fallback';
+    fallbackReason =
+      failureReasons[0] ||
+      'Embedding provider returned no usable vectors; fell back to lexical taxonomy matching.';
+  }
+
+  const sampleVector = vectors.values().next().value as number[] | undefined;
+  const dims = sampleVector ? sampleVector.length : 0;
+
+  if (status === 'succeeded') {
+    console.log(
+      `[embeddings] model=${EMBEDDING_MODEL} status=succeeded embedded=${embeddedCount}/${requestedCount} dims=${dims} latency=${latencyMs}ms`
+    );
+  } else {
     console.warn(
-      'Gemini embedding call skipped/failed; falling back to lexical semantic similarity:',
-      error instanceof Error ? error.message : error
+      `[embeddings] model=${EMBEDDING_MODEL} status=${status} embedded=${embeddedCount}/${requestedCount} latency=${latencyMs}ms reason=${fallbackReason}`
     );
   }
 
-  return result;
+  return {
+    vectors,
+    model: EMBEDDING_MODEL,
+    status,
+    requestedCount,
+    embeddedCount,
+    fallbackReason,
+    latencyMs,
+  };
 }
 
 const LEARNING_PLAN_SCHEMA = {

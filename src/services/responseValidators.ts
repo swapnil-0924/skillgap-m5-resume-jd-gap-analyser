@@ -77,6 +77,7 @@ export function validateAnalysisReport(raw: unknown): AnalysisReport {
   };
 
   const rawMeta = isRecord(raw.extractionMeta) ? raw.extractionMeta : null;
+  const rawEmbedDiag = rawMeta && isRecord(rawMeta.embeddingDiagnostics) ? rawMeta.embeddingDiagnostics : null;
   const extractionMeta: DocumentExtractionMeta = {
     resumePageCount:
       rawMeta && typeof rawMeta.resumePageCount === 'number' ? rawMeta.resumePageCount : 1,
@@ -91,11 +92,35 @@ export function validateAnalysisReport(raw: unknown): AnalysisReport {
       rawMeta?.semanticMatchingEngine === 'gemini_embedding_2'
         ? 'gemini_embedding_2'
         : 'lexical_fallback',
+    embeddingDiagnostics: rawEmbedDiag
+      ? {
+          provider:
+            typeof rawEmbedDiag.provider === 'string'
+              ? rawEmbedDiag.provider
+              : 'gemini-embedding-2',
+          status:
+            rawEmbedDiag.status === 'succeeded' ||
+            rawEmbedDiag.status === 'partial' ||
+            rawEmbedDiag.status === 'fallback' ||
+            rawEmbedDiag.status === 'skipped'
+              ? rawEmbedDiag.status
+              : 'fallback',
+          requestedCount:
+            typeof rawEmbedDiag.requestedCount === 'number' ? rawEmbedDiag.requestedCount : 0,
+          embeddedCount:
+            typeof rawEmbedDiag.embeddedCount === 'number' ? rawEmbedDiag.embeddedCount : 0,
+          fallbackReason:
+            typeof rawEmbedDiag.fallbackReason === 'string' ? rawEmbedDiag.fallbackReason : null,
+          latencyMs: typeof rawEmbedDiag.latencyMs === 'number' ? rawEmbedDiag.latencyMs : 0,
+        }
+      : undefined,
     processingTimeMs:
       rawMeta && typeof rawMeta.processingTimeMs === 'number' ? rawMeta.processingTimeMs : 0,
   };
 
   const rawAlign = isRecord(raw.experienceAlignment) ? raw.experienceAlignment : null;
+  const rawExpBreakdown =
+    rawAlign && isRecord(rawAlign.experienceBreakdown) ? rawAlign.experienceBreakdown : null;
   const experienceAlignment: ExperienceAlignment = {
     resumeYears: rawAlign && typeof rawAlign.resumeYears === 'number' ? rawAlign.resumeYears : null,
     requiredYears:
@@ -116,6 +141,19 @@ export function validateAnalysisReport(raw: unknown): AnalysisReport {
     missingCertifications: asStringArray(rawAlign?.missingCertifications),
     assessmentNote:
       rawAlign && typeof rawAlign.assessmentNote === 'string' ? rawAlign.assessmentNote : '',
+    relevanceFactor:
+      rawAlign && typeof rawAlign.relevanceFactor === 'number'
+        ? rawAlign.relevanceFactor
+        : undefined,
+    relevantYearsEstimate:
+      rawAlign &&
+      (typeof rawAlign.relevantYearsEstimate === 'number' ||
+        rawAlign.relevantYearsEstimate === null)
+        ? rawAlign.relevantYearsEstimate
+        : undefined,
+    experienceBreakdown: rawExpBreakdown
+      ? (rawExpBreakdown as unknown as ExperienceAlignment['experienceBreakdown'])
+      : undefined,
   };
 
   const completedDays = Array.isArray(raw.completedDays)

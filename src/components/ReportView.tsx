@@ -251,7 +251,9 @@ export function ReportView({
                 Transparent Score Breakdown
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Calculated deterministically from extracted evidence (exact + semantic embeddings).
+                {report.extractionMeta.semanticMatchingEngine === 'gemini_embedding_2'
+                  ? 'Calculated deterministically from extracted evidence (exact taxonomy + Gemini semantic embeddings).'
+                  : 'Calculated deterministically from extracted evidence (exact taxonomy + lexical fallback; semantic embeddings unavailable).'}
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -511,7 +513,7 @@ export function ReportView({
                       ) : item.status === 'partial' ? (
                         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#B45309]">
                           <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
-                          Partial
+                          {item.reviewRequired ? 'Partial · Review' : 'Partial'}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#B91C1C]">
@@ -530,8 +532,15 @@ export function ReportView({
                             {Math.round(item.similarityScore * 100)}%{' '}
                             {item.matchMethod === 'exact_normalized'
                               ? 'exact'
-                              : 'semantic'}
+                              : item.matchMethod === 'semantic_embedding'
+                              ? 'embedding'
+                              : 'lexical fallback'}
                           </p>
+                          {item.matchReason && item.status === 'partial' && (
+                            <p className="text-[11px] text-amber-700 mt-0.5 leading-snug">
+                              {item.matchReason}
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <span className="text-xs text-slate-400">Not found in resume</span>
@@ -571,6 +580,14 @@ export function ReportView({
                   : 'Not stated'}{' '}
                 · {report.experienceAlignment.resumeSeniority}
               </dd>
+              {report.experienceAlignment.relevantYearsEstimate !== undefined &&
+                report.experienceAlignment.relevantYearsEstimate !== null &&
+                report.experienceAlignment.relevanceFactor !== undefined && (
+                  <p className="text-[11px] text-slate-500 mt-0.5 font-mono tabular-nums">
+                    ~{report.experienceAlignment.relevantYearsEstimate} relevant yrs (
+                    {Math.round(report.experienceAlignment.relevanceFactor * 100)}% role relevance)
+                  </p>
+                )}
             </div>
             <div>
               <dt className="text-xs text-slate-500">JD Requirement</dt>

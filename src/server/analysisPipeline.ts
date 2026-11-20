@@ -107,9 +107,9 @@ export async function runFullGapAnalysisPipeline(
       ...jdStructured.skills.map((s) => s.canonicalName),
     ])
   );
-  const embeddingsBySkill = await embedSkillNames(allUniqueCanonicalSkills);
+  const embeddingResult = await embedSkillNames(allUniqueCanonicalSkills);
   console.log(
-    `[pipeline] Stage 2 (Embeddings): ${Date.now() - tEmbed}ms (vectors=${embeddingsBySkill.size})`
+    `[pipeline] Stage 2 (Embeddings): ${Date.now() - tEmbed}ms (status=${embeddingResult.status}, vectors=${embeddingResult.embeddedCount}/${embeddingResult.requestedCount}${embeddingResult.fallbackReason ? `, reason=${embeddingResult.fallbackReason}` : ''})`
   );
 
   // Stage 3: Semantic & Exact Skill Matching + Verbatim JD Evidence Verification + Deterministic Score
@@ -119,7 +119,7 @@ export async function runFullGapAnalysisPipeline(
     jdText,
     resumeSkills: resumeStructured.skills,
     jdSkills: jdStructured.skills,
-    embeddingsBySkill,
+    embeddingsBySkill: embeddingResult.vectors,
   });
 
   const allMatches = [
@@ -136,12 +136,20 @@ export async function runFullGapAnalysisPipeline(
     jdQualifications: jdStructured.qualifications,
     resumeCertifications: resumeStructured.certifications,
     jdCertifications: jdStructured.certifications,
+    resumeJobTitle: resumeStructured.jobTitle,
+    jdJobTitle: jdStructured.jobTitle,
   });
 
   const resolvedJobTitle = jdStructured.jobTitle || 'Target Role';
   const resolvedCompanyName = jdStructured.companyName || null;
+  const semanticMatchingEngine: 'gemini_embedding_2' | 'lexical_fallback' =
+    embeddingResult.status === 'succeeded' ||
+    (embeddingResult.status === 'partial' && matchOutput.usedEmbeddings)
+      ? 'gemini_embedding_2'
+      : 'lexical_fallback';
+
   console.log(
-    `[pipeline] Stage 3 (Matching & Scoring): ${Date.now() - tMatch}ms (score=${scoreBreakdown.overallScore}%)`
+    `[pipeline] Stage 3 (Matching & Scoring): ${Date.now() - tMatch}ms (engine=${semanticMatchingEngine}, embedding_comparisons=${matchOutput.embeddingComparisonCount}, lexical_comparisons=${matchOutput.lexicalFallbackCount}, score=${scoreBreakdown.overallScore}%, exp_relevance=${experienceAlignment.relevanceFactor ?? 0})`
   );
 
   // Stage 4: Personalized 14-Day Learning Plan
@@ -176,9 +184,15 @@ export async function runFullGapAnalysisPipeline(
       jdPageCount,
       jdExtractionMethod,
       jdCharCount: jdText.length,
-      semanticMatchingEngine: matchOutput.usedEmbeddings
-        ? 'gemini_embedding_2'
-        : 'lexical_fallback',
+      semanticMatchingEngine,
+      embeddingDiagnostics: {
+        provider: embeddingResult.model,
+        status: embeddingResult.status,
+        requestedCount: embeddingResult.requestedCount,
+        embeddedCount: embeddingResult.embeddedCount,
+        fallbackReason: embeddingResult.fallbackReason,
+        latencyMs: embeddingResult.latencyMs,
+      },
       processingTimeMs: Date.now() - startTime,
     },
     compatibilityScore: scoreBreakdown.overallScore,

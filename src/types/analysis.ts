@@ -51,6 +51,8 @@ export interface SkillMatchResult {
   matchedResumeSkill: string | null;
   jdEvidence: string;
   evidenceVerified: boolean;
+  reviewRequired?: boolean;
+  matchReason?: string;
 }
 
 export interface ScorePillarBreakdown {
@@ -72,6 +74,20 @@ export interface CompatibilityScoreBreakdown {
   isTechnicalRole: boolean;
 }
 
+export interface ExperienceScoreBreakdown {
+  totalYears: number | null;
+  requiredYears: number | null;
+  relevantYearsEstimate: number | null;
+  yearsSubscore: number;
+  domainSubscore: number;
+  senioritySubscore: number;
+  roleAlignmentScore: number;
+  skillRelevanceRatio: number;
+  relevanceFactor: number;
+  finalExperienceScore: number;
+  evidenceSummary: string;
+}
+
 export interface ExperienceAlignment {
   resumeYears: number | null;
   requiredYears: number | null;
@@ -84,6 +100,9 @@ export interface ExperienceAlignment {
   matchedCertifications: string[];
   missingCertifications: string[];
   assessmentNote: string;
+  relevanceFactor?: number;
+  relevantYearsEstimate?: number | null;
+  experienceBreakdown?: ExperienceScoreBreakdown;
 }
 
 export interface LearningDayPlan {
@@ -97,6 +116,15 @@ export interface LearningDayPlan {
   estimatedHours: number;
 }
 
+export interface EmbeddingDiagnostics {
+  provider: string;
+  status: 'succeeded' | 'partial' | 'fallback' | 'skipped';
+  requestedCount: number;
+  embeddedCount: number;
+  fallbackReason: string | null;
+  latencyMs: number;
+}
+
 export interface DocumentExtractionMeta {
   resumePageCount: number;
   resumeExtractionMethod: 'pdf_text' | 'gemini_ocr' | 'hybrid_ocr';
@@ -106,6 +134,7 @@ export interface DocumentExtractionMeta {
   jdExtractionMethod: 'direct_text' | 'pdf_text' | 'gemini_ocr' | 'hybrid_ocr';
   jdCharCount: number;
   semanticMatchingEngine: 'gemini_embedding_2' | 'lexical_fallback';
+  embeddingDiagnostics?: EmbeddingDiagnostics;
   processingTimeMs: number;
 }
 
