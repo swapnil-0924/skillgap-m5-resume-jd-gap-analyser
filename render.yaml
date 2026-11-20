@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: skillgap-m5
+    runtime: node
+    plan: free
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22.18.0"
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: SQL_HOST
+        sync: false
+      - key: SQL_USER
+        sync: false
+      - key: SQL_PASSWORD
+        sync: false
+      - key: SQL_DB_NAME
+        sync: false

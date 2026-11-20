@@ -19,8 +19,8 @@ export default defineConfig(() => {
           if (error) {
             return;
           }
-          const distDir = path.resolve(__dirname, 'dist');
-          const srcAssets = path.resolve(__dirname, 'src/assets');
+          const distDir = path.resolve(import.meta.dirname, 'dist');
+          const srcAssets = path.resolve(import.meta.dirname, 'src/assets');
           const distAssets = path.resolve(distDir, 'src/assets');
           if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
             fs.cpSync(srcAssets, distAssets, {recursive: true, force: true});
@@ -30,7 +30,37 @@ export default defineConfig(() => {
     ],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(import.meta.dirname, '.'),
+      },
+    },
+    build: {
+      rolldownOptions: {
+        output: {
+          codeSplitting: {
+            groups: [
+              {
+                name: 'react-vendor',
+                priority: 30,
+                test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              },
+              {
+                name: 'firebase-vendor',
+                priority: 25,
+                test: /node_modules[\\/](firebase|@firebase)[\\/]/,
+              },
+              {
+                name: 'icons-vendor',
+                priority: 25,
+                test: /node_modules[\\/]lucide-react[\\/]/,
+              },
+              {
+                name: 'charts-vendor',
+                priority: 15,
+                test: /node_modules[\\/](recharts|d3-[^\\/]+|victory-vendor|internmap|delaunator|robust-predicates|@reduxjs[\\/]toolkit|react-redux|redux|immer|reselect|es-toolkit|eventemitter3|decimal\.js-light|react-is|use-sync-external-store)[\\/]/,
+              },
+            ],
+          },
+        },
       },
     },
     server: {

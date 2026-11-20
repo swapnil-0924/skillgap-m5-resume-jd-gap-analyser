@@ -3,7 +3,6 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createServer as createViteServer } from 'vite';
 import { optionalAuth, requireAuth, type AuthRequest } from './src/middleware/auth.ts';
 import {
   createAnalysisRecord,
@@ -434,6 +433,7 @@ async function startServer() {
 
   // Vite Dev Middleware or Production Static Files
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

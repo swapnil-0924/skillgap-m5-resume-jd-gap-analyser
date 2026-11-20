@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import {
   CalendarDays,
   FileBarChart2,
@@ -20,10 +20,19 @@ import {
   updateRoadmapProgress,
 } from './services/api';
 import { OverviewView } from './components/OverviewView';
-import { AnalyzeView } from './components/AnalyzeView';
-import { ReportView } from './components/ReportView';
-import { RoadmapView } from './components/RoadmapView';
-import { HistoryView } from './components/HistoryView';
+
+const AnalyzeView = lazy(() =>
+  import('./components/AnalyzeView').then((m) => ({ default: m.AnalyzeView }))
+);
+const ReportView = lazy(() =>
+  import('./components/ReportView').then((m) => ({ default: m.ReportView }))
+);
+const RoadmapView = lazy(() =>
+  import('./components/RoadmapView').then((m) => ({ default: m.RoadmapView }))
+);
+const HistoryView = lazy(() =>
+  import('./components/HistoryView').then((m) => ({ default: m.HistoryView }))
+);
 
 type AppView = 'overview' | 'analyze' | 'report' | 'roadmap' | 'history';
 
@@ -414,47 +423,64 @@ function WorkspaceApp() {
             />
           )}
 
-          {view === 'analyze' && (
-            <AnalyzeView
-              getIdToken={getIdToken}
-              onAnalysisComplete={handleAnalysisComplete}
-            />
-          )}
+          <Suspense
+            fallback={
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex min-h-[320px] items-center justify-center rounded-xl border border-[#E2E8F0] bg-white p-8"
+              >
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#E2E8F0] border-t-[#1E3A8A]" />
+                  <p className="text-sm font-medium text-[#475569]">
+                    Loading {VIEW_LABELS[view]}…
+                  </p>
+                </div>
+              </div>
+            }
+          >
+            {view === 'analyze' && (
+              <AnalyzeView
+                getIdToken={getIdToken}
+                onAnalysisComplete={handleAnalysisComplete}
+              />
+            )}
 
-          {view === 'report' && (
-            <ReportView
-              report={activeReport}
-              isSignedIn={Boolean(user)}
-              savingReport={savingReport}
-              onSaveSessionReport={handleSaveSessionReport}
-              onOpenRoadmap={() => navigate('roadmap')}
-              onStartNewAnalysis={() => navigate('analyze')}
-            />
-          )}
+            {view === 'report' && (
+              <ReportView
+                report={activeReport}
+                isSignedIn={Boolean(user)}
+                savingReport={savingReport}
+                onSaveSessionReport={handleSaveSessionReport}
+                onOpenRoadmap={() => navigate('roadmap')}
+                onStartNewAnalysis={() => navigate('analyze')}
+              />
+            )}
 
-          {view === 'roadmap' && (
-            <RoadmapView
-              report={activeReport}
-              onToggleDayComplete={handleToggleDayComplete}
-              onOpenReport={() => navigate('report')}
-              onStartNewAnalysis={() => navigate('analyze')}
-            />
-          )}
+            {view === 'roadmap' && (
+              <RoadmapView
+                report={activeReport}
+                onToggleDayComplete={handleToggleDayComplete}
+                onOpenReport={() => navigate('report')}
+                onStartNewAnalysis={() => navigate('analyze')}
+              />
+            )}
 
-          {view === 'history' && (
-            <HistoryView
-              isSignedIn={Boolean(user)}
-              history={history}
-              loading={historyLoading}
-              error={historyError}
-              openingId={openingId}
-              deletingId={deletingId}
-              onOpenReport={handleOpenHistoryItem}
-              onDeleteReport={handleDeleteHistoryItem}
-              onSignIn={signInWithGoogle}
-              onStartNewAnalysis={() => navigate('analyze')}
-            />
-          )}
+            {view === 'history' && (
+              <HistoryView
+                isSignedIn={Boolean(user)}
+                history={history}
+                loading={historyLoading}
+                error={historyError}
+                openingId={openingId}
+                deletingId={deletingId}
+                onOpenReport={handleOpenHistoryItem}
+                onDeleteReport={handleDeleteHistoryItem}
+                onSignIn={signInWithGoogle}
+                onStartNewAnalysis={() => navigate('analyze')}
+              />
+            )}
+          </Suspense>
         </main>
       </div>
     </div>
