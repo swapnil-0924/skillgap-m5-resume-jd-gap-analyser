@@ -12,7 +12,15 @@
     "build": "NODE_ENV=production vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "tsx tests/cli-runner.ts --suite=all",
+    "test:unit": "node --import tsx --test tests/unit/m5.unit.test.ts src/analysis/matchingAndScoring.test.ts src/analysis/skillTaxonomy.test.ts",
+    "test:integration": "tsx --test tests/integration/m5.integration.test.ts",
+    "test:api": "tsx --test tests/api/m5.api.test.ts",
+    "test:e2e": "tsx --test tests/e2e/m5.e2e.test.ts",
+    "test:security": "tsx --test tests/security/m5.security.test.ts",
+    "test:ai": "tsx --test tests/ai-regression/m5.ai-regression.test.ts",
+    "audit:run": "tsx tests/cli-runner.ts --suite=security"
   },
   "dependencies": {
     "@google/genai": "^3.6.1",

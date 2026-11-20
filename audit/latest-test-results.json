@@ -1,0 +1,757 @@
+{
+  "generatedAt": "2026-11-20T22:03:11.894Z",
+  "privacyNotice": "Sanitized synthetic test telemetry only. Contains zero real user resumes, PII, or credentials.",
+  "run": {
+    "id": 1,
+    "runType": "all",
+    "startedAt": "2026-11-20T22:02:42.763Z",
+    "completedAt": "2026-11-20T22:03:11.319Z",
+    "durationMs": 28556,
+    "totalTests": 34,
+    "passed": 26,
+    "failed": 8,
+    "blocked": 0,
+    "skipped": 0,
+    "passPercentage": 76.5,
+    "overallStatus": "failed",
+    "applicationVersion": "1.0.0-m5",
+    "commitHash": null
+  },
+  "results": [
+    {
+      "id": 19,
+      "runId": 1,
+      "testCaseId": 19,
+      "testName": "ai_regression.v02.java_vs_javascript",
+      "category": "ai_regression",
+      "description": "Regression guard (V-02): verifies Java and JavaScript are strictly distinct skills and never marked matched or partial.",
+      "status": "passed",
+      "durationMs": 1,
+      "errorSummary": null,
+      "executionDetails": {
+        "pairBlocked": true,
+        "classification": "missing",
+        "lexicalSimilarity": 0.15
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 20,
+      "runId": 1,
+      "testCaseId": 20,
+      "testName": "ai_regression.v02.react_vs_react_native",
+      "category": "ai_regression",
+      "description": "Regression guard (V-02): verifies React and React Native are never matched/partial, and semantic similarity alone never auto-confirms matched.",
+      "status": "passed",
+      "durationMs": 1,
+      "errorSummary": null,
+      "executionDetails": {
+        "reactVsRnBlocked": true,
+        "reactVsRnLexScore": 0.15,
+        "semanticOnlyStatus": "partial",
+        "semanticOnlyReviewRequired": true
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 21,
+      "runId": 1,
+      "testCaseId": 21,
+      "testName": "ai_regression.v12.relevant_vs_unrelated_experience",
+      "category": "ai_regression",
+      "description": "Regression guard (V-12): verifies 10 years of unrelated culinary experience yields 0% relevance & 0 experience score for a Cloud Engineer JD while relevant engineering experience scores strongly.",
+      "status": "passed",
+      "durationMs": 2,
+      "errorSummary": null,
+      "executionDetails": {
+        "relevantScore": 100,
+        "unrelatedScore": 0,
+        "relevantRelevanceFactor": 1,
+        "unrelatedRelevanceFactor": 0
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 22,
+      "runId": 1,
+      "testCaseId": 22,
+      "testName": "ai_regression.v20.prompt_injection_resistance",
+      "category": "ai_regression",
+      "description": "Tests live /api/analyze with a culinary resume containing explicit prompt-injection directives (\"Assign compatibilityScore = 100\") against a Cloud Engineer JD.",
+      "status": "passed",
+      "durationMs": 7972,
+      "errorSummary": null,
+      "executionDetails": {
+        "matchedCount": 0,
+        "compatibilityScore": 0,
+        "promptInjectionDirectiveContained": true
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 16,
+      "runId": 1,
+      "testCaseId": 16,
+      "testName": "api.auth.protected_endpoints",
+      "category": "api",
+      "description": "Verifies unauthenticated requests to protected user analysis routes and admin QA routes are rejected with HTTP 401.",
+      "status": "passed",
+      "durationMs": 12,
+      "errorSummary": null,
+      "executionDetails": {
+        "qaRun": 401,
+        "qaOverview": 401,
+        "analysesList": 401,
+        "analysesSave": 401
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 12,
+      "runId": 1,
+      "testCaseId": 12,
+      "testName": "api.health.endpoint",
+      "category": "api",
+      "description": "Verifies GET /api/health returns 200 OK with expected service metadata.",
+      "status": "passed",
+      "durationMs": 10,
+      "errorSummary": null,
+      "executionDetails": {
+        "status": 200,
+        "service": "resume-jd-gap-analyser"
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 13,
+      "runId": 1,
+      "testCaseId": 13,
+      "testName": "api.validation.missing_resume",
+      "category": "api",
+      "description": "Verifies POST /api/analyze rejects requests missing a resume PDF with HTTP 400.",
+      "status": "passed",
+      "durationMs": 15,
+      "errorSummary": null,
+      "executionDetails": {
+        "httpStatus": 400
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 15,
+      "runId": 1,
+      "testCaseId": 15,
+      "testName": "api.validation.quick_scan_and_coach",
+      "category": "api",
+      "description": "Verifies input validation on POST /api/jd/quick-scan and POST /api/coach.",
+      "status": "passed",
+      "durationMs": 23,
+      "errorSummary": null,
+      "executionDetails": {
+        "coachStatus": 400,
+        "quickScanStatus": 400
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 14,
+      "runId": 1,
+      "testCaseId": 14,
+      "testName": "api.validation.short_jd_and_corrupt_pdf",
+      "category": "api",
+      "description": "Verifies POST /api/analyze rejects short JD text (400) and corrupted PDF files (422).",
+      "status": "passed",
+      "durationMs": 209,
+      "errorSummary": null,
+      "executionDetails": {
+        "shortJdStatus": 400,
+        "corruptPdfStatus": 422
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 17,
+      "runId": 1,
+      "testCaseId": 17,
+      "testName": "e2e.analyze.full_live_pipeline",
+      "category": "e2e",
+      "description": "Executes full live POST /api/analyze with synthetic resume PDF + JD: PDF extraction, AI skill extraction, semantic matching, evidence, compatibility score, and 14-day roadmap.",
+      "status": "passed",
+      "durationMs": 9249,
+      "errorSummary": null,
+      "executionDetails": {
+        "roadmapDays": 14,
+        "matchedCount": 8,
+        "missingCount": 3,
+        "processingTimeMs": 9239,
+        "compatibilityScore": 78,
+        "semanticMatchingEngine": "gemini_embedding_2"
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 18,
+      "runId": 1,
+      "testCaseId": 18,
+      "testName": "e2e.analyze_stream.ndjson_lifecycle",
+      "category": "e2e",
+      "description": "Executes live POST /api/analyze-stream with both synthetic resume PDF and synthetic JD PDF, validating NDJSON progress frames and final report delivery.",
+      "status": "passed",
+      "durationMs": 8878,
+      "errorSummary": null,
+      "executionDetails": {
+        "jdInputType": "pdf",
+        "roadmapDays": 14,
+        "progressEvents": 5,
+        "compatibilityScore": 78
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 10,
+      "runId": 1,
+      "testCaseId": 10,
+      "testName": "integration.db.isolated_save_and_retrieval",
+      "category": "integration",
+      "description": "Verifies isolated PostgreSQL user creation, analysis save, history listing, retrieval, progress update, and cleanup without touching production rows.",
+      "status": "passed",
+      "durationMs": 463,
+      "errorSummary": null,
+      "executionDetails": {
+        "createdAndDeletedId": 1,
+        "sanitizedCompletedDays": [
+          1,
+          2
+        ]
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 7,
+      "runId": 1,
+      "testCaseId": 7,
+      "testName": "integration.embeddings.generation_and_fallback",
+      "category": "integration",
+      "description": "Verifies multi-skill batch embedding mapping, clean fallback on provider failure, and live gemini-embedding-2 when GEMINI_API_KEY is available.",
+      "status": "passed",
+      "durationMs": 1,
+      "errorSummary": null,
+      "executionDetails": {
+        "batchCount": 3,
+        "fallbackStatus": "fallback",
+        "liveEmbeddingDims": 0,
+        "liveEmbeddingStatus": "skipped_no_key_in_process"
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 8,
+      "runId": 1,
+      "testCaseId": 8,
+      "testName": "integration.gemini.error_resilience",
+      "category": "integration",
+      "description": "Verifies OCR fallback and embedding helpers surface clean structured errors (503 / fallback status) without crashing on Gemini API failures.",
+      "status": "passed",
+      "durationMs": 13,
+      "errorSummary": null,
+      "executionDetails": {
+        "unusedRefBytes": 699,
+        "ocrFailureStatusCode": 503,
+        "embeddingMismatchStatus": "fallback"
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 9,
+      "runId": 1,
+      "testCaseId": 9,
+      "testName": "integration.jd.pdf_extraction",
+      "category": "integration",
+      "description": "Extracts Job Description requirements cleanly from an uploaded synthetic JD PDF.",
+      "status": "passed",
+      "durationMs": 13,
+      "errorSummary": null,
+      "executionDetails": {
+        "charCount": 679,
+        "pageCount": 1,
+        "extractionMethod": "pdf_text"
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 11,
+      "runId": 1,
+      "testCaseId": 11,
+      "testName": "integration.pipeline.matching_scoring_evidence",
+      "category": "integration",
+      "description": "Verifies end-to-end deterministic integration across taxonomy normalization, matching engine, evidence grounding, and scoring engine.",
+      "status": "passed",
+      "durationMs": 3,
+      "errorSummary": null,
+      "executionDetails": {
+        "matchedCount": 8,
+        "missingCount": 1,
+        "overallScore": 90,
+        "partialCount": 2,
+        "verifiedEvidenceCount": 11
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 26,
+      "runId": 1,
+      "testCaseId": 26,
+      "testName": "sec.ai.prompt_injection_guard",
+      "category": "security",
+      "description": "SEC-004: Verifies deterministic scoring and verbatim evidence engine block resume prompt-injection score overrides.",
+      "status": "passed",
+      "durationMs": 2,
+      "errorSummary": null,
+      "executionDetails": {
+        "deterministicScore": 0,
+        "injectedQuoteRejected": true
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 28,
+      "runId": 1,
+      "testCaseId": 28,
+      "testName": "sec.api.concurrency_limits",
+      "category": "security",
+      "description": "SEC-006: Checks whether AI analysis endpoints enforce an active concurrency cap against resource exhaustion.",
+      "status": "failed",
+      "durationMs": 2,
+      "errorSummary": "SEC-006 OPEN (medium): /api/analyze and /api/analyze-stream do not enforce a maximum concurrent execution cap.",
+      "executionDetails": {
+        "qaRunnerSingleFlightMutex": true,
+        "analyzeConcurrencyGuardDetected": false
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 34,
+      "runId": 1,
+      "testCaseId": 34,
+      "testName": "sec.api.error_handling",
+      "category": "security",
+      "description": "SEC-012: Verifies malformed JSON returns HTTP 400 JSON (not 500) and unknown /api/* routes return HTTP 404 JSON (not SPA HTML 200).",
+      "status": "failed",
+      "durationMs": 50,
+      "errorSummary": "SEC-012 OPEN (medium): malformed JSON returned HTTP 500 (expected 400); unknown /api/* path returned HTTP 200 (text/html) instead of 404 JSON.",
+      "executionDetails": {
+        "unknownApiStatus": 200,
+        "malformedJsonStatus": 500,
+        "unknownApiContentType": "text/html"
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 27,
+      "runId": 1,
+      "testCaseId": 27,
+      "testName": "sec.api.rate_limiting",
+      "category": "security",
+      "description": "SEC-005: Inspects live API responses for HTTP rate-limiting headers (RateLimit-* / X-RateLimit-*) and throttling middleware.",
+      "status": "failed",
+      "durationMs": 4,
+      "errorSummary": "SEC-005 OPEN (high): No HTTP rate-limiting headers or middleware detected on Express API routes.",
+      "executionDetails": {
+        "rateLimitHeadersDetected": false
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 29,
+      "runId": 1,
+      "testCaseId": 29,
+      "testName": "sec.api.untrusted_client_score",
+      "category": "security",
+      "description": "SEC-007: Checks whether POST /api/analyses/save validates or recomputes client-supplied compatibilityScore instead of persisting untrusted numbers directly.",
+      "status": "failed",
+      "durationMs": 2,
+      "errorSummary": "SEC-007 OPEN (high): POST /api/analyses/save persists client-supplied compatibilityScore directly without server-side recomputation or 0..100 bounds validation.",
+      "executionDetails": {
+        "directlyPersistsClientScore": true
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 30,
+      "runId": 1,
+      "testCaseId": 30,
+      "testName": "sec.auth.idor_and_unauthorized_access",
+      "category": "security",
+      "description": "SEC-008: Verifies unauthorized access returns 401 and cross-user IDOR queries cannot read, modify, or delete another user’s saved analysis.",
+      "status": "passed",
+      "durationMs": 707,
+      "errorSummary": null,
+      "executionDetails": {
+        "crossUserDbIdorIsolation": true,
+        "unauthenticatedEndpointsReturned401": true
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 33,
+      "runId": 1,
+      "testCaseId": 33,
+      "testName": "sec.deps.vulnerability_audit",
+      "category": "security",
+      "description": "SEC-011: Runs dependency vulnerability scan (`bun audit`) to detect known CVEs in installed packages.",
+      "status": "passed",
+      "durationMs": 266,
+      "errorSummary": null,
+      "executionDetails": {
+        "auditTool": "bun audit",
+        "vulnerabilitiesFound": 0
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 32,
+      "runId": 1,
+      "testCaseId": 32,
+      "testName": "sec.headers.http_security_headers",
+      "category": "security",
+      "description": "SEC-010: Verifies presence of baseline HTTP security headers (X-Content-Type-Options, Referrer-Policy, Permissions-Policy, Cache-Control: no-store) on /api/health.",
+      "status": "failed",
+      "durationMs": 4,
+      "errorSummary": "SEC-010 OPEN (medium): Missing HTTP security headers on /api/health: X-Content-Type-Options: nosniff, Referrer-Policy, Permissions-Policy, Cache-Control: no-store.",
+      "executionDetails": {
+        "missingHeaders": [
+          "X-Content-Type-Options: nosniff",
+          "Referrer-Policy",
+          "Permissions-Policy",
+          "Cache-Control: no-store"
+        ]
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 31,
+      "runId": 1,
+      "testCaseId": 31,
+      "testName": "sec.info.sensitive_exposure",
+      "category": "security",
+      "description": "SEC-009: Checks API responses for secret leaks, stack traces, and server fingerprinting headers (X-Powered-By).",
+      "status": "failed",
+      "durationMs": 6,
+      "errorSummary": "SEC-009 OPEN (low): X-Powered-By header (\"Express\") is exposed on API responses (no secrets or stack traces leaked).",
+      "executionDetails": {
+        "xPoweredBy": "Express",
+        "secretLeakDetected": "[REDACTED]"
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 23,
+      "runId": 1,
+      "testCaseId": 23,
+      "testName": "sec.pdf.malicious_active_content",
+      "category": "security",
+      "description": "SEC-001: Tests whether PDF validation rejects documents containing /JavaScript or /OpenAction active-content markers.",
+      "status": "failed",
+      "durationMs": 0,
+      "errorSummary": "SEC-001 OPEN (medium): validatePdfBuffer accepted a PDF containing /JavaScript and /OpenAction markers.",
+      "executionDetails": {
+        "rejectedActiveContentMarkers": false
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 24,
+      "runId": 1,
+      "testCaseId": 24,
+      "testName": "sec.pdf.polyglot_header",
+      "category": "security",
+      "description": "SEC-002: Tests whether GIF/PDF polyglot payloads with non-zero %PDF- magic offset are rejected.",
+      "status": "failed",
+      "durationMs": 1,
+      "errorSummary": "SEC-002 OPEN (medium): validatePdfBuffer accepted a GIF89a/%PDF-1.4 polyglot because %PDF- is checked anywhere in the first 1024 bytes.",
+      "executionDetails": {
+        "rejectedPolyglotHeader": false
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 25,
+      "runId": 1,
+      "testCaseId": 25,
+      "testName": "sec.request.oversized_payloads",
+      "category": "security",
+      "description": "SEC-003: Verifies oversized PDF buffers (>10 MB) and oversized JSON request bodies (>4 MB) are rejected.",
+      "status": "passed",
+      "durationMs": 122,
+      "errorSummary": null,
+      "executionDetails": {
+        "jsonStatus": 500,
+        "jsonRejected": true,
+        "pdfRejected413": true
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 6,
+      "runId": 1,
+      "testCaseId": 6,
+      "testName": "unit.evidence.verbatim_grounding",
+      "category": "unit",
+      "description": "Verifies verbatim JD evidence extraction and honest unverified fallback when a fabricated quote is proposed.",
+      "status": "passed",
+      "durationMs": 0,
+      "errorSummary": null,
+      "executionDetails": {
+        "unverifiedFlag": false,
+        "verifiedSnippetLength": 79
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 4,
+      "runId": 1,
+      "testCaseId": 4,
+      "testName": "unit.matching.exact_and_synonym",
+      "category": "unit",
+      "description": "Verifies exact normalized skill matching and explicit taxonomy synonyms (e.g., Postgres -> PostgreSQL, ReactJS -> React, K8s -> Kubernetes).",
+      "status": "passed",
+      "durationMs": 3,
+      "errorSummary": null,
+      "executionDetails": {
+        "matched": [
+          "Kubernetes",
+          "PostgreSQL",
+          "React"
+        ],
+        "missing": [
+          "Terraform"
+        ],
+        "exactMethodCount": 3
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 2,
+      "runId": 1,
+      "testCaseId": 2,
+      "testName": "unit.pdf.invalid_and_corrupted",
+      "category": "unit",
+      "description": "Rejects empty buffers, non-PDF files renamed to .pdf, and corrupted PDF structures.",
+      "status": "passed",
+      "durationMs": 3,
+      "errorSummary": null,
+      "executionDetails": {
+        "emptyStatus": 400,
+        "nonPdfStatus": 422,
+        "corruptStatus": 422
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 3,
+      "runId": 1,
+      "testCaseId": 3,
+      "testName": "unit.pdf.page_and_size_limits",
+      "category": "unit",
+      "description": "Enforces the 25-page maximum document restriction (422) and 10 MB file-size limit (413).",
+      "status": "passed",
+      "durationMs": 54,
+      "errorSummary": null,
+      "executionDetails": {
+        "testedBytes": 10486272,
+        "testedPages": 28,
+        "pageLimitStatus": 422,
+        "sizeLimitStatus": 413
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 1,
+      "runId": 1,
+      "testCaseId": 1,
+      "testName": "unit.pdf.valid_extraction",
+      "category": "unit",
+      "description": "Extracts text and page count accurately from a valid synthetic resume PDF.",
+      "status": "passed",
+      "durationMs": 221,
+      "errorSummary": null,
+      "executionDetails": {
+        "charCount": 899,
+        "pageCount": 1,
+        "extractionMethod": "pdf_text"
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    },
+    {
+      "id": 5,
+      "runId": 1,
+      "testCaseId": 5,
+      "testName": "unit.scoring.compatibility_and_experience",
+      "category": "unit",
+      "description": "Verifies deterministic compatibility score calculation, pillar weight normalization, and degree hierarchy matching.",
+      "status": "passed",
+      "durationMs": 4,
+      "errorSummary": null,
+      "executionDetails": {
+        "formula": "55% × 67% (Technical) + 15% × 100% (Soft) + 12% × 100% (Qualifications) + 18% × 100% (Relevant) = 82%",
+        "overallScore": 82,
+        "relevanceFactor": 1
+      },
+      "createdAt": "2026-11-20T22:03:11.147Z"
+    }
+  ],
+  "securityAudit": {
+    "id": 1,
+    "runId": 1,
+    "auditType": "full_suite_security_audit",
+    "overallStatus": "findings_open",
+    "createdAt": "2026-11-20T22:03:11.214Z",
+    "findings": [
+      {
+        "id": 1,
+        "auditId": 1,
+        "runId": 1,
+        "findingCode": "SEC-001",
+        "title": "PDF active content markers (/JavaScript, /OpenAction) not rejected on upload",
+        "severity": "medium",
+        "status": "open",
+        "description": "validatePdfBuffer in src/server/pdfProcessor.ts accepted a synthetic PDF containing /JavaScript and /OpenAction dictionary entries without rejecting or stripping active content.",
+        "remediation": "Scan uploaded PDF buffers in validatePdfBuffer() for active-content tokens (/JavaScript, /JS, /OpenAction, /Launch, /AA) and reject with HTTP 422 before parsing.",
+        "verifiedAt": null
+      },
+      {
+        "id": 2,
+        "auditId": 1,
+        "runId": 1,
+        "findingCode": "SEC-002",
+        "title": "PDF magic header allows leading polyglot bytes (GIF/HTML prefix)",
+        "severity": "medium",
+        "status": "open",
+        "description": "validatePdfBuffer checks `headerSlice.includes(\"%PDF-\")` across the first 1024 bytes rather than requiring `%PDF-` at byte offset 0, permitting GIF89a/HTML polyglot files.",
+        "remediation": "Require `buffer.subarray(0, 5).toString(\"latin1\") === \"%PDF-\"` (allowing only optional UTF-8 BOM if needed) and reject non-zero magic offsets with HTTP 422.",
+        "verifiedAt": null
+      },
+      {
+        "id": 3,
+        "auditId": 1,
+        "runId": 1,
+        "findingCode": "SEC-003",
+        "title": "Oversized file (>10 MB) and JSON body (>4 MB) limits",
+        "severity": "high",
+        "status": "verified_secure",
+        "description": "Oversized PDF (>10 MB) rejected with 413; oversized JSON body (>4 MB) rejected with HTTP 500.",
+        "remediation": "Keep Multer 10 MB limit and Express JSON 4 MB cap enforced; optionally map PayloadTooLargeError explicitly to HTTP 413.",
+        "verifiedAt": "2026-11-20T22:03:10.071Z"
+      },
+      {
+        "id": 4,
+        "auditId": 1,
+        "runId": 1,
+        "findingCode": "SEC-004",
+        "title": "Prompt injection isolation in deterministic matching & scoring",
+        "severity": "high",
+        "status": "verified_secure",
+        "description": "Deterministic scoring engine and verbatim JD evidence verification prevented injected resume instructions from overriding scores or injecting unverified quotes.",
+        "remediation": "Maintain deterministic server-side scoring and consider adding explicit delimiter framing around untrusted resume text in LLM extraction prompts.",
+        "verifiedAt": "2026-11-20T22:03:10.073Z"
+      },
+      {
+        "id": 5,
+        "auditId": 1,
+        "runId": 1,
+        "findingCode": "SEC-005",
+        "title": "Missing API rate limiting on AI analysis and coaching endpoints",
+        "severity": "high",
+        "status": "open",
+        "description": "No rate-limiting headers (RateLimit-Limit / X-RateLimit-Limit) or throttling middleware were detected on /api/analyze, /api/analyze-stream, /api/jd/quick-scan, or /api/coach.",
+        "remediation": "Add express-rate-limit (e.g., 10 analyses/15min per IP on /api/analyze* and 30 req/15min on /api/coach and /api/jd/quick-scan) with standard RateLimit-* headers and HTTP 429 responses.",
+        "verifiedAt": null
+      },
+      {
+        "id": 6,
+        "auditId": 1,
+        "runId": 1,
+        "findingCode": "SEC-006",
+        "title": "No server-side concurrency cap on /api/analyze and /api/analyze-stream",
+        "severity": "medium",
+        "status": "open",
+        "description": "While the QA test runner enforces a single-flight execution mutex, the primary /api/analyze and /api/analyze-stream routes do not cap simultaneous in-flight PDF parsing and Gemini API pipelines.",
+        "remediation": "Introduce a bounded concurrency counter (e.g. max 4–6 simultaneous analyses) on /api/analyze* returning HTTP 503 with Retry-After when saturated.",
+        "verifiedAt": null
+      },
+      {
+        "id": 7,
+        "auditId": 1,
+        "runId": 1,
+        "findingCode": "SEC-007",
+        "title": "Untrusted client-supplied compatibilityScore persisted by POST /api/analyses/save",
+        "severity": "high",
+        "status": "open",
+        "description": "In server.ts, POST /api/analyses/save stores `Number(body.compatibilityScore) || 0` directly from the request payload without recomputing from skill matches or clamping to [0, 100], allowing authenticated users to forge saved scores.",
+        "remediation": "Recompute compatibilityScore and scoreBreakdown server-side using calculateCompatibilityScore() before inserting into PostgreSQL, or sign session analysis payloads with a server HMAC.",
+        "verifiedAt": null
+      },
+      {
+        "id": 8,
+        "auditId": 1,
+        "runId": 1,
+        "findingCode": "SEC-008",
+        "title": "Unauthorized access & cross-user IDOR isolation",
+        "severity": "critical",
+        "status": "verified_secure",
+        "description": "Unauthenticated requests to /api/analyses/* and /api/qa/* consistently returned HTTP 401, and repository queries strictly scope read/update/delete by authenticated userId.",
+        "remediation": "Maintain requireAuth/requireAdmin middleware and userId-scoped Drizzle predicates on all resource endpoints.",
+        "verifiedAt": "2026-11-20T22:03:10.788Z"
+      },
+      {
+        "id": 9,
+        "auditId": 1,
+        "runId": 1,
+        "findingCode": "SEC-009",
+        "title": "Server technology fingerprinting header (X-Powered-By: Express) exposed",
+        "severity": "low",
+        "status": "open",
+        "description": "API responses include the \"X-Powered-By: Express\" header. No API keys, credentials, or stack traces were exposed.",
+        "remediation": "Call `app.disable(\"x-powered-by\")` in server.ts during Express initialization.",
+        "verifiedAt": null
+      },
+      {
+        "id": 10,
+        "auditId": 1,
+        "runId": 1,
+        "findingCode": "SEC-010",
+        "title": "Missing baseline HTTP security headers on core API responses",
+        "severity": "medium",
+        "status": "open",
+        "description": "Live probe of GET /api/health observed missing headers: X-Content-Type-Options: nosniff, Referrer-Policy, Permissions-Policy, Cache-Control: no-store.",
+        "remediation": "Add a global Express security-headers middleware (or helmet configured for iframe compatibility) setting X-Content-Type-Options: nosniff, Referrer-Policy: strict-origin-when-cross-origin, Permissions-Policy, and Cache-Control: no-store on /api/*.",
+        "verifiedAt": null
+      },
+      {
+        "id": 11,
+        "auditId": 1,
+        "runId": 1,
+        "findingCode": "SEC-011",
+        "title": "Dependency vulnerability audit (0 known vulnerabilities)",
+        "severity": "high",
+        "status": "verified_secure",
+        "description": "Live `bun audit` scan reported 0 known vulnerabilities across installed dependencies.",
+        "remediation": "Continue running dependency audits on every release and PR.",
+        "verifiedAt": "2026-11-20T22:03:11.064Z"
+      },
+      {
+        "id": 12,
+        "auditId": 1,
+        "runId": 1,
+        "findingCode": "SEC-012",
+        "title": "Malformed JSON status mapping and /api/* 404 JSON boundary",
+        "severity": "medium",
+        "status": "open",
+        "description": "Observed error-handling gaps: malformed JSON returned HTTP 500 (expected 400); unknown /api/* path returned HTTP 200 (text/html) instead of 404 JSON.",
+        "remediation": "Add a `/api/*` 404 JSON catch-all route before Vite/static SPA fallback, and map `SyntaxError` / `entity.parse.failed` in formatApiError() to HTTP 400.",
+        "verifiedAt": null
+      }
+    ]
+  },
+  "comparison": null
+}

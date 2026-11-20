@@ -8,6 +8,7 @@ import {
   LogIn,
   LogOut,
   Menu,
+  ShieldCheck,
   X,
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -34,8 +35,11 @@ const RoadmapView = lazy(() =>
 const HistoryView = lazy(() =>
   import('./components/HistoryView').then((m) => ({ default: m.HistoryView }))
 );
+const QaDashboardView = lazy(() =>
+  import('./components/QaDashboardView').then((m) => ({ default: m.QaDashboardView }))
+);
 
-type AppView = 'overview' | 'analyze' | 'report' | 'roadmap' | 'history';
+type AppView = 'overview' | 'analyze' | 'report' | 'roadmap' | 'history' | 'qa';
 
 const VIEW_LABELS: Record<AppView, string> = {
   overview: 'Overview',
@@ -43,6 +47,7 @@ const VIEW_LABELS: Record<AppView, string> = {
   report: 'Analysis Report',
   roadmap: '14-Day Roadmap',
   history: 'Analysis History',
+  qa: 'QA & Security',
 };
 
 function WorkspaceApp() {
@@ -227,6 +232,7 @@ function WorkspaceApp() {
       icon: History,
       count: history.length > 0 ? history.length : undefined,
     },
+    { id: 'qa', label: 'QA & Security', icon: ShieldCheck },
   ];
 
   const renderSidebarContent = () => (
@@ -493,6 +499,15 @@ function WorkspaceApp() {
                   onRetry={loadHistory}
                   onSignIn={signInWithGoogle}
                   onStartNewAnalysis={() => navigate('analyze')}
+                />
+              )}
+
+              {view === 'qa' && (
+                <QaDashboardView
+                  isSignedIn={Boolean(user)}
+                  userEmail={user?.email ?? null}
+                  getIdToken={getIdToken}
+                  onSignIn={signInWithGoogle}
                 />
               )}
             </Suspense>

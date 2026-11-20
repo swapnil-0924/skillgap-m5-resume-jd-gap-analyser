@@ -3,7 +3,13 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { optionalAuth, requireAuth, type AuthRequest } from './src/middleware/auth.ts';
+import {
+  isRequestAdmin,
+  optionalAuth,
+  requireAdmin,
+  requireAuth,
+  type AuthRequest,
+} from './src/middleware/auth.ts';
 import {
   createAnalysisRecord,
   deleteAnalysisByIdForUser,
@@ -11,6 +17,22 @@ import {
   listAnalysesByUser,
   updateCompletedDaysForUser,
 } from './src/db/repository.ts';
+import {
+  getQaOverview,
+  getTestRunDetail,
+  listSecurityFindings,
+  listTestRuns,
+} from './src/db/qaRepository.ts';
+import {
+  getActiveRunState,
+  QaRunInProgressError,
+  runQaSuite,
+} from './src/qa/qaRunner.ts';
+import {
+  generateSecurityAuditMarkdown,
+  generateTestReportJson,
+  generateTestReportMarkdown,
+} from './src/qa/reportGenerator.ts';
 import { runFullGapAnalysisPipeline } from './src/server/analysisPipeline.ts';
 import {
   DocumentValidationError,
@@ -23,6 +45,12 @@ import {
   quickScanJobDescription,
 } from './src/server/geminiService.ts';
 import type { AnalysisReport } from './src/types/analysis.ts';
+import type {
+  QaRunOverallStatus,
+  QaRunType,
+  SecurityFindingStatus,
+  SecuritySeverity,
+} from './src/types/qa.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -419,6 +447,232 @@ async function startServer() {
       return res.json(result);
     } catch (error) {
       console.error('Error in POST /api/coach:', error);
+      const formatted = formatApiError(error);
+      return res.status(formatted.status).json({ error: formatted.message });
+    }
+  });
+
+  // ============================================================================
+  // 10. Permanent QA Testing & Security Audit API (Strictly Admin-Protected)
+  // ============================================================================
+  const ALLOWED_QA_RUN_TYPES = new Set<QaRunType>([
+    'all',
+    'unit',
+    'integration',
+    'api',
+    'e2e',
+    'security',
+    'ai_regression',
+  ]);
+  const ALLOWED_QA_STATUSES = new Set<QaRunOverallStatus>([
+    'running',
+    'passed',
+    'failed',
+    'partial',
+    'crashed',
+  ]);
+  const ALLOWED_SEVERITIES = new Set<SecuritySeverity>([
+    'critical',
+    'high',
+    'medium',
+    'low',
+    'info',
+  ]);
+  const ALLOWED_FINDING_STATUSES = new Set<SecurityFindingStatus>([
+    'open',
+    'verified_secure',
+    'mitigated',
+    'blocked',
+  ]);
+
+  app.use('/api/qa', (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    next();
+  });
+
+  // 10a. Check whether the current session holds QA Admin access
+  app.get('/api/qa/access', optionalAuth, (req: AuthRequest, res) => {
+    const admin = isRequestAdmin(req);
+    return res.json({
+      authenticated: Boolean(req.user) || admin,
+      isAdmin: admin,
+      email: req.user?.email || req.dbUser?.email || null,
+    });
+  });
+
+  // 10b. QA Dashboard Overview metrics & latest security audit
+  app.get('/api/qa/overview', requireAdmin, async (_req, res) => {
+    try {
+      const overview = await getQaOverview(getActiveRunState());
+      return res.json(overview);
+    } catch (error) {
+      console.error('Error in GET /api/qa/overview:', error);
+      const formatted = formatApiError(error);
+      return res.status(formatted.status).json({ error: formatted.message });
+    }
+  });
+
+  // 10c. Filtered list of test runs
+  app.get('/api/qa/runs', requireAdmin, async (req, res) => {
+    try {
+      const rawRunType = typeof req.query.runType === 'string' ? req.query.runType.trim() : '';
+      const rawStatus = typeof req.query.status === 'string' ? req.query.status.trim() : '';
+      const rawFrom = typeof req.query.from === 'string' ? req.query.from.trim() : '';
+      const rawTo = typeof req.query.to === 'string' ? req.query.to.trim() : '';
+      const rawLimit = typeof req.query.limit === 'string' ? Number(req.query.limit) : 50;
+
+      const runType =
+        rawRunType && ALLOWED_QA_RUN_TYPES.has(rawRunType as QaRunType)
+          ? (rawRunType as QaRunType)
+          : undefined;
+      const status =
+        rawStatus && ALLOWED_QA_STATUSES.has(rawStatus as QaRunOverallStatus)
+          ? (rawStatus as QaRunOverallStatus)
+          : undefined;
+
+      const from = rawFrom ? new Date(rawFrom) : undefined;
+      const to = rawTo ? new Date(rawTo) : undefined;
+      if ((from && Number.isNaN(from.getTime())) || (to && Number.isNaN(to.getTime()))) {
+        return res.status(400).json({ error: 'Invalid date filter format.' });
+      }
+
+      const runs = await listTestRuns({
+        runType,
+        status,
+        from,
+        to,
+        limit: Number.isFinite(rawLimit) ? rawLimit : 50,
+      });
+      return res.json({ runs });
+    } catch (error) {
+      console.error('Error in GET /api/qa/runs:', error);
+      const formatted = formatApiError(error);
+      return res.status(formatted.status).json({ error: formatted.message });
+    }
+  });
+
+  // 10d. Full detail for a single test run
+  app.get('/api/qa/runs/:id', requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: 'Invalid test run ID.' });
+      }
+      const detail = await getTestRunDetail(id);
+      if (!detail) {
+        return res.status(404).json({ error: 'Test run not found.' });
+      }
+      return res.json(detail);
+    } catch (error) {
+      console.error('Error in GET /api/qa/runs/:id:', error);
+      const formatted = formatApiError(error);
+      return res.status(formatted.status).json({ error: formatted.message });
+    }
+  });
+
+  // 10e. Filtered security findings ledger
+  app.get('/api/qa/findings', requireAdmin, async (req, res) => {
+    try {
+      const rawSeverity = typeof req.query.severity === 'string' ? req.query.severity.trim() : '';
+      const rawStatus = typeof req.query.status === 'string' ? req.query.status.trim() : '';
+      const rawAuditId = typeof req.query.auditId === 'string' ? Number(req.query.auditId) : undefined;
+
+      const severity =
+        rawSeverity && ALLOWED_SEVERITIES.has(rawSeverity as SecuritySeverity)
+          ? (rawSeverity as SecuritySeverity)
+          : undefined;
+      const status =
+        rawStatus && ALLOWED_FINDING_STATUSES.has(rawStatus as SecurityFindingStatus)
+          ? (rawStatus as SecurityFindingStatus)
+          : undefined;
+      const auditId =
+        rawAuditId !== undefined && Number.isInteger(rawAuditId) && rawAuditId > 0
+          ? rawAuditId
+          : undefined;
+
+      const findings = await listSecurityFindings({ severity, status, auditId });
+      return res.json({ findings });
+    } catch (error) {
+      console.error('Error in GET /api/qa/findings:', error);
+      const formatted = formatApiError(error);
+      return res.status(formatted.status).json({ error: formatted.message });
+    }
+  });
+
+  // 10f. Controlled single-flight execution of QA test suites & security audit
+  app.post('/api/qa/run', requireAdmin, async (req, res) => {
+    try {
+      const rawType = typeof req.body?.runType === 'string' ? req.body.runType.trim() : 'all';
+      if (!ALLOWED_QA_RUN_TYPES.has(rawType as QaRunType)) {
+        return res.status(400).json({
+          error: `Invalid runType "${rawType}". Allowed values: ${Array.from(ALLOWED_QA_RUN_TYPES).join(', ')}.`,
+        });
+      }
+
+      const output = await runQaSuite({
+        runType: rawType as QaRunType,
+        baseUrl: `http://127.0.0.1:${PORT}`,
+        persistToDatabase: true,
+        writeAuditFiles: true,
+      });
+
+      return res.status(201).json(output.detail);
+    } catch (error) {
+      if (error instanceof QaRunInProgressError) {
+        return res.status(409).json({ error: error.message });
+      }
+      console.error('Error in POST /api/qa/run:', error);
+      const formatted = formatApiError(error);
+      return res.status(formatted.status).json({ error: formatted.message });
+    }
+  });
+
+  // 10g. Export Test Execution Report (MD/JSON) or Security Audit Report (MD)
+  app.get('/api/qa/runs/:id/export', requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: 'Invalid test run ID.' });
+      }
+      const format = typeof req.query.format === 'string' ? req.query.format.trim() : 'test-md';
+      if (format !== 'test-md' && format !== 'test-json' && format !== 'security-md') {
+        return res.status(400).json({
+          error: 'Invalid export format. Use format=test-md, test-json, or security-md.',
+        });
+      }
+
+      const detail = await getTestRunDetail(id);
+      if (!detail) {
+        return res.status(404).json({ error: 'Test run not found.' });
+      }
+
+      if (format === 'test-json') {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="m5-test-results-run-${id}.json"`
+        );
+        return res.send(generateTestReportJson(detail));
+      }
+
+      if (format === 'security-md') {
+        res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="m5-security-audit-run-${id}.md"`
+        );
+        return res.send(generateSecurityAuditMarkdown(detail));
+      }
+
+      res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="m5-test-report-run-${id}.md"`
+      );
+      return res.send(generateTestReportMarkdown(detail));
+    } catch (error) {
+      console.error('Error in GET /api/qa/runs/:id/export:', error);
       const formatted = formatApiError(error);
       return res.status(formatted.status).json({ error: formatted.message });
     }
