@@ -25,6 +25,11 @@ export default defineConfig(() => {
           if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
             fs.cpSync(srcAssets, distAssets, {recursive: true, force: true});
           }
+          // Strip unreferenced debug screenshots copied from public/assets/aistudio/
+          const debugAssetsDir = path.resolve(distDir, 'assets/aistudio');
+          if (fs.existsSync(debugAssetsDir)) {
+            fs.rmSync(debugAssetsDir, {recursive: true, force: true});
+          }
         },
       },
     ],

@@ -280,7 +280,13 @@ async function startServer() {
         return res.status(401).json({ error: 'Authentication required.' });
       }
       const body = req.body as Partial<AnalysisReport>;
-      if (!body.resumeFilename || !body.jdText || !body.scoreBreakdown) {
+      if (
+        !body.resumeFilename ||
+        !body.jdText ||
+        !body.scoreBreakdown ||
+        !body.extractionMeta ||
+        !body.experienceAlignment
+      ) {
         return res.status(400).json({ error: 'Incomplete analysis payload.' });
       }
 
@@ -292,7 +298,7 @@ async function startServer() {
         jdSourceName: body.jdSourceName || 'Pasted Job Description',
         jdText: body.jdText,
         resumeTextExcerpt: body.resumeTextExcerpt || '',
-        extractionMeta: body.extractionMeta!,
+        extractionMeta: body.extractionMeta,
         compatibilityScore: Number(body.compatibilityScore) || 0,
         scoreBreakdown: body.scoreBreakdown,
         matchedSkills: Array.isArray(body.matchedSkills) ? body.matchedSkills : [],
@@ -300,7 +306,7 @@ async function startServer() {
         missingSkills: Array.isArray(body.missingSkills) ? body.missingSkills : [],
         resumeSkills: Array.isArray(body.resumeSkills) ? body.resumeSkills : [],
         jdSkills: Array.isArray(body.jdSkills) ? body.jdSkills : [],
-        experienceAlignment: body.experienceAlignment!,
+        experienceAlignment: body.experienceAlignment,
         learningPlan: Array.isArray(body.learningPlan) ? body.learningPlan : [],
         completedDays: Array.isArray(body.completedDays) ? body.completedDays : [],
       });
